@@ -15,6 +15,20 @@
       "when": 1765735454616,
       "tag": "0001_past_juggernaut",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1765737347993,
+      "tag": "0002_lonely_deadpool",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "5",
+      "when": 1765737456490,
+      "tag": "0003_exotic_avengers",
+      "breakpoints": true
     }
   ]
 }

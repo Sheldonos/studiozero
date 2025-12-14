@@ -8,6 +8,7 @@ import Home from "./pages/Home";
 import Dashboard from "./pages/Dashboard";
 import CreateProject from "./pages/CreateProject";
 import ProjectDetail from "./pages/ProjectDetail";
+import Assets from "./pages/Assets";
 
 function Router() {
   return (
@@ -16,6 +17,7 @@ function Router() {
       <Route path="/dashboard" component={Dashboard} />
       <Route path="/create" component={CreateProject} />
       <Route path="/project/:id" component={ProjectDetail} />
+      <Route path="/assets" component={Assets} />
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
     </Switch>

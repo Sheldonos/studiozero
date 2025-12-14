@@ -20,7 +20,10 @@ import {
   GenerationJob,
   audioStems,
   InsertAudioStem,
-  AudioStem
+  AudioStem,
+  customAssets,
+  InsertCustomAsset,
+  CustomAsset
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
@@ -357,4 +360,46 @@ export async function getProjectStats(projectId: number): Promise<{
     failedShots,
     totalCost: project?.totalCost || 0,
   };
+}
+
+// ============ Custom Assets ============
+
+export async function createCustomAsset(asset: InsertCustomAsset): Promise<CustomAsset> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.insert(customAssets).values(asset);
+  
+  // Retrieve the most recently inserted asset by this user
+  const inserted = await db.select().from(customAssets)
+    .where(eq(customAssets.userId, asset.userId))
+    .orderBy(customAssets.createdAt)
+    .limit(1);
+  
+  if (!inserted[0]) {
+    throw new Error("Failed to retrieve inserted asset");
+  }
+  
+  return inserted[0];
+}
+
+export async function getCustomAssetsByUser(userId: number): Promise<CustomAsset[]> {
+  const db = await getDb();
+  if (!db) return [];
+  
+  return db.select().from(customAssets).where(eq(customAssets.userId, userId));
+}
+
+export async function getCustomAssetsByProject(projectId: number): Promise<CustomAsset[]> {
+  const db = await getDb();
+  if (!db) return [];
+  
+  return db.select().from(customAssets).where(eq(customAssets.projectId, projectId));
+}
+
+export async function deleteCustomAsset(assetId: number): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.delete(customAssets).where(eq(customAssets.id, assetId));
 }

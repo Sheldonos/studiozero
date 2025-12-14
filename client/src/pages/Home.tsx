@@ -1,11 +1,22 @@
+import { useState } from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
+import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Film, ArrowRight, Sparkles, Music, Video, Image } from "lucide-react";
 import { Link } from "wouter";
 
 export default function Home() {
+  const [, setLocation] = useLocation();
+  const [inputText, setInputText] = useState("");
   const { isAuthenticated } = useAuth();
+
+  const handleBuildNow = () => {
+    if (inputText.trim()) {
+      sessionStorage.setItem("filmIdea", inputText);
+    }
+    setLocation("/create");
+  };
 
   const suggestions = [
     {
@@ -66,18 +77,18 @@ export default function Home() {
                 <textarea
                   placeholder="Describe your film idea or paste your book/script text..."
                   className="w-full min-h-[100px] bg-transparent border-none outline-none resize-none text-gray-900 placeholder:text-gray-400 text-lg"
-                  defaultValue=""
+                  value={inputText}
+                  onChange={(e) => setInputText(e.target.value)}
                 />
               </div>
               {isAuthenticated ? (
-                <Link href="/create">
-                  <Button 
-                    size="lg" 
-                    className="bg-orange-500 hover:bg-orange-600 text-white px-8 py-6 rounded-full shadow-md"
-                  >
-                    Build now <ArrowRight className="ml-2 w-5 h-5" />
-                  </Button>
-                </Link>
+                <Button 
+                  size="lg" 
+                  className="bg-orange-500 hover:bg-orange-600 text-white px-8 py-6 rounded-full shadow-md"
+                  onClick={handleBuildNow}
+                >
+                  Build now <ArrowRight className="ml-2 w-5 h-5" />
+                </Button>
               ) : (
                 <Button 
                   size="lg" 
@@ -97,22 +108,50 @@ export default function Home() {
             </p>
             
             <div className="grid gap-4">
-              {suggestions.map((suggestion, index) => (
-                <Card 
-                  key={index}
-                  className="bg-white/60 backdrop-blur-sm border-gray-200 hover:bg-white/80 transition-all cursor-pointer group p-6"
-                >
-                  <div className="flex items-start gap-4">
-                    <div className="flex-shrink-0">
-                      <suggestion.icon className={`w-6 h-6 ${suggestion.color}`} />
-                    </div>
-                    <p className="text-left text-gray-700 text-base flex-1">
-                      {suggestion.title}
-                    </p>
-                    <ArrowRight className="w-5 h-5 text-gray-400 group-hover:text-gray-600 transition-colors flex-shrink-0" />
+              <Card 
+                className="bg-white/60 backdrop-blur-sm border-gray-200 hover:bg-white/80 transition-all cursor-pointer group p-6"
+                onClick={() => setLocation("/assets")}
+              >
+                <div className="flex items-start gap-4">
+                  <div className="flex-shrink-0">
+                    <Image className="w-6 h-6 text-purple-500" />
                   </div>
-                </Card>
-              ))}
+                  <p className="text-left text-gray-700 text-base flex-1">
+                    Add a feature to let users upload their own custom visual assets for the AI to use in film generation.
+                  </p>
+                  <ArrowRight className="w-5 h-5 text-gray-400 group-hover:text-gray-600 transition-colors flex-shrink-0" />
+                </div>
+              </Card>
+              
+              <Card 
+                className="bg-white/60 backdrop-blur-sm border-gray-200 hover:bg-white/80 transition-all cursor-pointer group p-6"
+                onClick={() => setLocation("/create")}
+              >
+                <div className="flex items-start gap-4">
+                  <div className="flex-shrink-0">
+                    <Video className="w-6 h-6 text-blue-500" />
+                  </div>
+                  <p className="text-left text-gray-700 text-base flex-1">
+                    Implement an assembly system using FFmpeg to combine video shots and audio into a final MP4 file.
+                  </p>
+                  <ArrowRight className="w-5 h-5 text-gray-400 group-hover:text-gray-600 transition-colors flex-shrink-0" />
+                </div>
+              </Card>
+              
+              <Card 
+                className="bg-white/60 backdrop-blur-sm border-gray-200 hover:bg-white/80 transition-all cursor-pointer group p-6"
+                onClick={() => setLocation("/create")}
+              >
+                <div className="flex items-start gap-4">
+                  <div className="flex-shrink-0">
+                    <Music className="w-6 h-6 text-orange-500" />
+                  </div>
+                  <p className="text-left text-gray-700 text-base flex-1">
+                    Integrate ElevenLabs API to generate dialogue and narration for the film's audio track.
+                  </p>
+                  <ArrowRight className="w-5 h-5 text-gray-400 group-hover:text-gray-600 transition-colors flex-shrink-0" />
+                </div>
+              </Card>
             </div>
           </div>
 

@@ -19,6 +19,26 @@ export type User = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
 
 /**
+ * Custom visual assets uploaded by users
+ */
+export const customAssets = mysqlTable("custom_assets", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("user_id").notNull(),
+  projectId: int("project_id"),
+  assetType: mysqlEnum("asset_type", ["character_reference", "location_reference", "style_reference", "prop"]).notNull(),
+  assetName: varchar("asset_name", { length: 255 }).notNull(),
+  assetUrl: text("asset_url").notNull(),
+  assetKey: text("asset_key").notNull(),
+  thumbnailUrl: text("thumbnail_url"),
+  description: text("description"),
+  tags: text("tags"), // JSON array of tags
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export type CustomAsset = typeof customAssets.$inferSelect;
+export type InsertCustomAsset = typeof customAssets.$inferInsert;
+
+/**
  * Projects table - stores film/series generation projects
  */
 export const projects = mysqlTable("projects", {
@@ -257,7 +277,10 @@ export const audioStems = mysqlTable("audioStems", {
   
   // Audio metadata
   durationSeconds: int("durationSeconds"),
+  startTimeSeconds: int("startTimeSeconds").default(0), // Start time in final assembly
+  volume: int("volume").default(100), // 0-100
   characterName: varchar("characterName", { length: 255 }), // For dialogue
+  dialogueText: text("dialogueText"), // Original dialogue text
   
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });

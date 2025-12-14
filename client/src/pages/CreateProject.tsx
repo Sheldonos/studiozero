@@ -15,10 +15,13 @@ export default function CreateProject() {
   const { user } = useAuth();
   const [, setLocation] = useLocation();
   
+  // Check for pre-populated text from homepage
+  const savedIdea = typeof window !== "undefined" ? sessionStorage.getItem("filmIdea") : null;
+  
   const [formData, setFormData] = useState({
     sourceTitle: "",
     sourceType: "book" as "book" | "script",
-    sourceText: "",
+    sourceText: savedIdea || "",
     format: "film_16x9" as "film_16x9" | "series_16x9" | "vertical_9x16",
     stylePreset: "rocky_70s_grit" as "rocky_70s_grit" | "a24_drama" | "pixar_like" | "anime_noir",
     castingOverrideMain: "",

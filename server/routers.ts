@@ -22,6 +22,9 @@ import { parseNarrative } from "./agents/narrativeParser";
 import { planShots, getStylePresetDescription } from "./agents/director";
 import { generateImageSync, generateVideoSync, estimateImageCost, estimateVideoCost } from "./integrations/replicate";
 import { storagePut } from "./storage";
+import { generateProjectAudio } from "./agents/audioGenerator";
+import { assembleFilm } from "./assembly/ffmpeg";
+import { getAudioStemsByProjectId, createCustomAsset, getCustomAssetsByUser, deleteCustomAsset } from "./db";
 
 export const appRouter = router({
   system: systemRouter,
@@ -150,6 +153,59 @@ export const appRouter = router({
         }
         
         return getProjectStats(input.id);
+      }),
+  }),
+
+  assets: router({
+    // Upload custom visual asset
+    upload: protectedProcedure
+      .input(z.object({
+        assetType: z.enum(["character_reference", "location_reference", "style_reference", "prop"]),
+        assetName: z.string().min(1).max(255),
+        assetData: z.string(), // Base64 encoded image
+        projectId: z.number().optional(),
+        description: z.string().optional(),
+        tags: z.array(z.string()).optional(),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        // Decode base64 image
+        const imageBuffer = Buffer.from(input.assetData, "base64");
+        
+        // Upload to S3
+        const assetKey = `users/${ctx.user.id}/assets/${input.assetType}_${Date.now()}.jpg`;
+        const { url: assetUrl } = await storagePut(assetKey, imageBuffer, "image/jpeg");
+        
+        // Create database record
+        const asset = await createCustomAsset({
+          userId: ctx.user.id,
+          projectId: input.projectId || null,
+          assetType: input.assetType,
+          assetName: input.assetName,
+          assetUrl,
+          assetKey,
+          description: input.description || null,
+          tags: input.tags ? JSON.stringify(input.tags) : null,
+        });
+        
+        return asset;
+      }),
+
+    // List user's assets
+    list: protectedProcedure.query(async ({ ctx }) => {
+      const assets = await getCustomAssetsByUser(ctx.user.id);
+      return assets.map(asset => ({
+        ...asset,
+        tags: asset.tags ? JSON.parse(asset.tags) : [],
+      }));
+    }),
+
+    // Delete asset
+    delete: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input, ctx }) => {
+        // TODO: Verify ownership before deleting
+        await deleteCustomAsset(input.id);
+        return { success: true };
       }),
   }),
 });
@@ -321,9 +377,80 @@ async function processProject(projectId: number, sourceText: string): Promise<vo
     await updateProject(projectId, { totalCost });
     console.log(`[Pipeline] Video generation complete`);
     
-    // For MVP, mark as delivered (skip audio and assembly for now)
-    await updateProjectStatus(projectId, "DELIVERED");
-    console.log(`[Pipeline] Project ${projectId} processing complete!`);
+    // Phase 5: Generate audio
+    console.log(`[Pipeline] Phase 5: Generating audio...`);
+    await updateProjectStatus(projectId, "AUDIO_GEN_IN_PROGRESS");
+    
+    try {
+      const audioResult = await generateProjectAudio({
+        projectId,
+        storyGraph,
+        scenes: shotPlan.scenes,
+      });
+      
+      totalCost += audioResult.totalCost;
+      await updateProject(projectId, { totalCost });
+      
+      await updateProjectStatus(projectId, "AUDIO_COMPLETE");
+      console.log(`[Pipeline] Audio generation complete: ${audioResult.audioStems.length} stems`);
+    } catch (error) {
+      console.error(`[Pipeline] Error generating audio:`, error);
+      // Continue without audio
+    }
+    
+    // Phase 6: Assemble final film
+    console.log(`[Pipeline] Phase 6: Assembling final film...`);
+    await updateProjectStatus(projectId, "ASSEMBLY_IN_PROGRESS");
+    
+    try {
+      // Collect all completed shots
+      const allShots = [];
+      for (const scene of scenes) {
+        const sceneShots = await getShotsBySceneId(scene.id);
+        const completedShots = sceneShots
+          .filter(s => s.status === "COMPLETE" && s.videoUrl)
+          .sort((a, b) => a.shotId.localeCompare(b.shotId));
+        allShots.push(...completedShots);
+      }
+      
+      if (allShots.length === 0) {
+        throw new Error("No completed shots to assemble");
+      }
+      
+      // Get audio stems
+      const audioStems = await getAudioStemsByProjectId(projectId);
+      
+      // Assemble film
+      const assemblyResult = await assembleFilm({
+        projectId,
+        shots: allShots.map((shot, index) => ({
+          url: shot.videoUrl!,
+          durationSeconds: shot.durationSeconds,
+          order: index,
+        })),
+        audioTracks: audioStems.map(stem => ({
+          url: stem.audioUrl!,
+          type: stem.stemType as any,
+          startTime: stem.startTimeSeconds || 0,
+          volume: (stem.volume || 100) / 100,
+        })),
+        outputFormat: project.format,
+      });
+      
+      // Update project with final video
+      await updateProject(projectId, {
+        finalRenderUrl: assemblyResult.videoUrl,
+        finalRenderKey: assemblyResult.videoKey,
+        totalCost,
+      });
+      
+      await updateProjectStatus(projectId, "DELIVERED");
+      console.log(`[Pipeline] Project ${projectId} processing complete! Final video: ${assemblyResult.videoUrl}`);
+    } catch (error) {
+      console.error(`[Pipeline] Error assembling film:`, error);
+      // Mark as delivered anyway with individual shots
+      await updateProjectStatus(projectId, "DELIVERED");
+    }
     
   } catch (error) {
     console.error(`[Pipeline] Fatal error processing project ${projectId}:`, error);

@@ -226,3 +226,35 @@ Build an agentic AI film studio platform that transforms books/scripts into cine
 - [x] Add centered content layout with suggestion cards
 - [x] Update color scheme to match new design (light blue to peach gradient)
 - [x] Test authentication flow end-to-end
+
+
+## 🎯 New Features (In Progress)
+
+### Audio Generation
+- [x] ElevenLabs API integration
+- [x] Voice synthesis for character dialogue
+- [x] Narration generation
+- [ ] Background music integration
+- [x] Audio stem management in database
+
+### Assembly Pipeline
+- [x] FFmpeg installation and setup
+- [x] Video concatenation system
+- [x] Audio track mixing (dialogue + music + foley)
+- [x] Transition effects between shots
+- [x] Final MP4 rendering at 1080p
+- [x] Progress tracking for assembly jobs
+
+### Custom Asset Upload
+- [x] Asset upload UI component
+- [x] S3 storage for user assets
+- [x] Asset management in database
+- [ ] Integration with image generation (use as reference)
+- [x] Asset preview and deletion
+
+### Homepage Enhancements
+- [x] Interactive suggestion cards with navigation
+- [ ] Example film gallery section
+- [x] Homepage textarea auto-populate create form
+- [x] Quick start template functionality
+- [x] Responsive design improvements
