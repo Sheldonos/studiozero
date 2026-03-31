@@ -29,6 +29,13 @@
       "when": 1765737456490,
       "tag": "0003_exotic_avengers",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "5",
+      "when": 1774931501535,
+      "tag": "0004_glamorous_serpent_society",
+      "breakpoints": true
     }
   ]
 }

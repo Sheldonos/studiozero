@@ -258,3 +258,18 @@ Build an agentic AI film studio platform that transforms books/scripts into cine
 - [x] Homepage textarea auto-populate create form
 - [x] Quick start template functionality
 - [x] Responsive design improvements
+
+
+## 🧹 Codebase Cleanup & GitHub Release
+
+- [ ] Audit all files for Manus-specific references
+- [ ] Replace Manus OAuth with standard auth (or make configurable)
+- [ ] Replace Manus LLM helper with OpenAI SDK directly
+- [ ] Replace Manus storage helper with standard AWS S3 SDK
+- [ ] Remove Manus-specific env vars from code references
+- [ ] Replace vite-plugin-manus-runtime with standard Vite config
+- [ ] Create .env.example with all required variables
+- [ ] Write clean professional README.md
+- [ ] Add local development setup instructions
+- [ ] Create docker-compose.yml for easy local setup
+- [ ] Push to new public GitHub repository
